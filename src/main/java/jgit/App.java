@@ -23,12 +23,21 @@ public class App
         Files.write(Paths.get(repo1path.toString(), "foo"), "foo".getBytes());
         repo1git.commit().setMessage("first commit").call();
 
-        // Clone repo 1 to repo 2
-        Git repo2git = Git.cloneRepository().setDirectory(repo2path.toFile()).setURI("file://" + repo1path.toString()).call();
+        final boolean isBare = true;
+        System.out.println();
+        System.out.println("Bare? " + isBare);
 
-        // Look at HEAD of repo 2 after cloning
+        // Clone repo 1 to repo 2
+        Git repo2git = Git.cloneRepository().setBare(isBare).setDirectory(repo2path.toFile()).setURI("file://" + repo1path.toString()).call();
+
+        // Look at HEAD, FETCH_HEAD, and 'master' of repo 2 after cloning
         ObjectId initialHead = repo2git.getRepository().resolve("HEAD");
-        System.out.println("HEAD is initially " + initialHead.getName());
+        ObjectId initialFetchHead = repo2git.getRepository().resolve("FETCH_HEAD");
+        ObjectId initialMaster = repo2git.getRepository().resolve("master");
+        System.out.println();
+        System.out.println("HEAD right after clone is " + initialHead.getName());
+        System.out.println("FETCH_HEAD right after clone is " + initialFetchHead.getName());
+        System.out.println("master right after clone is " + initialMaster.getName());
 
         // Make a second commit into repo 1
         Files.write(Paths.get(repo1path.toString(), "bar"), "bar".getBytes());
@@ -37,12 +46,13 @@ public class App
         // Fetch the second commit in repo 1 into repo 2
         repo2git.fetch().call();
 
-        // Look at HEAD in repo 2 again
+        // Look at HEAD, FETCH_HEAD, and 'master' in repo 2 again
         ObjectId secondHead = repo2git.getRepository().resolve("HEAD");
-        System.out.println("HEAD is now " + secondHead.getName());
-
-        // Look at FETCH_HEAD in repo 2
-        ObjectId fetchHead = repo2git.getRepository().resolve("FETCH_HEAD");
-        System.out.println("FETCH_HEAD is now " + fetchHead.getName());
+        ObjectId secondFetchHead = repo2git.getRepository().resolve("FETCH_HEAD");
+        ObjectId secondMaster = repo2git.getRepository().resolve("master");
+        System.out.println();
+        System.out.println("HEAD after fetch is " + secondHead.getName());
+        System.out.println("FETCH_HEAD after fetch is " + secondFetchHead.getName());
+        System.out.println("master after fetch is " + secondMaster.getName());
     }
 }
