@@ -5,10 +5,15 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
+import org.eclipse.jgit.util.IO;
 
 public class App
 {
@@ -29,6 +34,8 @@ public class App
 
         // Clone repo 1 to repo 2
         Git repo2git = Git.cloneRepository().setBare(isBare).setDirectory(repo2path.toFile()).setURI("file://" + repo1path.toString()).call();
+        File repo2gitDir=repo2git.getRepository().getDirectory();
+        System.out.println("content of GITDIR/config is:\n" + new String(IO.readFully(new File(repo2gitDir, "config"))));
 
         // Look at HEAD, FETCH_HEAD, and 'master' of repo 2 after cloning
         ObjectId initialHead = repo2git.getRepository().resolve("HEAD");
@@ -38,13 +45,17 @@ public class App
         System.out.println("HEAD right after clone is " + initialHead.getName());
         System.out.println("FETCH_HEAD right after clone is " + initialFetchHead.getName());
         System.out.println("master right after clone is " + initialMaster.getName());
+        System.out.println("content of GITDIR/HEAD right after clone is:\n" + new String(IO.readFully(new File(repo2gitDir, "HEAD"))));
 
         // Make a second commit into repo 1
         Files.write(Paths.get(repo1path.toString(), "bar"), "bar".getBytes());
         repo1git.commit().setMessage("hi again").call();
 
         // Fetch the second commit in repo 1 into repo 2
-        repo2git.fetch().call();
+        FetchResult fetchResult = repo2git.fetch().call();
+        for (TrackingRefUpdate u : fetchResult.getTrackingRefUpdates()) {
+        	System.out.println("Update during fetch: "+u);
+        }
 
         // Look at HEAD, FETCH_HEAD, and 'master' in repo 2 again
         ObjectId secondHead = repo2git.getRepository().resolve("HEAD");
@@ -54,5 +65,6 @@ public class App
         System.out.println("HEAD after fetch is " + secondHead.getName());
         System.out.println("FETCH_HEAD after fetch is " + secondFetchHead.getName());
         System.out.println("master after fetch is " + secondMaster.getName());
+        System.out.println("content of GITDIR/HEAD after fetch is:\n" + new String(IO.readFully(new File(repo2gitDir, "HEAD"))));
     }
 }
